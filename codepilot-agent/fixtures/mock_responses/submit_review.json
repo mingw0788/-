@@ -1,0 +1,69 @@
+[
+  {
+    "issues": [
+      {
+        "issue_id": "seed-1-hardcoded-credential",
+        "category": "Security",
+        "priority": "P0",
+        "severity": "Blocker",
+        "code_anchor": "DB_PASSWORD = \"admin123456\"",
+        "description": "数据库口令以明文硬编码在源码中。任何能读到仓库的人（包括离职员工、CI 日志、构建缓存）都能拿到生产凭据，且无法在不改代码的情况下轮换。",
+        "suggestion": "改为从环境变量或密钥管理服务读取，例如 os.environ[\"DB_PASSWORD\"]，并在缺失时显式失败。"
+      },
+      {
+        "issue_id": "seed-2-sql-injection",
+        "category": "Security",
+        "priority": "P0",
+        "severity": "Blocker",
+        "code_anchor": "query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"\n    cursor.execute(query)",
+        "description": "用户名被直接拼接进 SQL 语句，攻击者传入 ' OR '1'='1 即可绕过条件读取全表，或通过 UNION 注入读取任意数据。",
+        "suggestion": "改用参数化查询：cursor.execute(\"SELECT * FROM users WHERE name = ?\", (username,))。"
+      },
+      {
+        "issue_id": "seed-3-none-deref",
+        "category": "Logic",
+        "priority": "P1",
+        "severity": "Critical",
+        "code_anchor": "name = user[\"name\"]",
+        "description": "user 可能为 None（查询无结果时），此时下标访问会抛 TypeError 导致接口 500。",
+        "suggestion": "在访问前判空，或在查询层保证返回默认对象。"
+      },
+      {
+        "issue_id": "seed-4-nested-loop",
+        "category": "Performance",
+        "priority": "P2",
+        "severity": "Major",
+        "code_anchor": "for i in range(len(items)):\n        for j in range(len(items)):\n            total += items[i] * items[j]",
+        "description": "嵌套遍历同一序列，复杂度 O(n^2)，且 items[i] 在内层循环被反复索引。数据量上千时性能急剧下降。",
+        "suggestion": "用一次求和与自乘替代双重循环，把复杂度降到 O(n)。"
+      },
+      {
+        "issue_id": "seed-5-weak-hash",
+        "category": "Security",
+        "priority": "P1",
+        "severity": "Critical",
+        "code_anchor": "return hashlib.md5(password.encode()).hexdigest()",
+        "description": "MD5 计算极快且无盐，配合彩虹表可在秒级还原常见口令，不适用于口令存储。",
+        "suggestion": "改用 bcrypt / scrypt / argon2 等带盐的慢哈希算法。"
+      },
+      {
+        "issue_id": "seed-6-naming",
+        "category": "Style",
+        "priority": "P3",
+        "severity": "Minor",
+        "code_anchor": "def ReadConfig(path):",
+        "description": "函数名使用 PascalCase，不符合 PEP 8 与团队 snake_case 规范。",
+        "suggestion": "重命名为 read_config。注意该函数可能被其他文件调用，需同步修改调用处。"
+      },
+      {
+        "issue_id": "seed-7-swallowed-exception",
+        "category": "Logic",
+        "priority": "P1",
+        "severity": "Major",
+        "code_anchor": "try:\n        return a / b\n    except Exception:\n        return None",
+        "description": "捕获了所有异常并静默返回 None，除零错误与调用方传入非法类型被混为一谈，故障被隐藏到调用链下游，难以定位。",
+        "suggestion": "只捕获 ZeroDivisionError，并让其他异常继续向上抛出。"
+      }
+    ]
+  }
+]

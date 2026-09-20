@@ -1,0 +1,48 @@
+[
+  {
+    "fixes": [
+      {
+        "issue_id": "seed-1-hardcoded-credential",
+        "requires_cross_file": false,
+        "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -9,7 +9,7 @@\n import sqlite3\n \n # [SEED:1] 硬编码的凭据 —— Security / P0。锚点唯一，应当被精确定位并修复。\n-DB_PASSWORD = \"admin123456\"\n+DB_PASSWORD = os.environ[\"DB_PASSWORD\"]\n API_TOKEN = \"sk-live-9f8e7d6c5b4a39281706\"\n \n \n",
+        "explanation": "针对 seed-1-hardcoded-credential 的最小变更。"
+      },
+      {
+        "issue_id": "seed-2-sql-injection",
+        "requires_cross_file": false,
+        "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -17,8 +17,7 @@\n     \"\"\"按用户名查询用户。\"\"\"\n     cursor = conn.cursor()\n     # [SEED:2] SQL 注入 —— Security / P0。锚点跨两行，用于验证多行定位与 patch。\n-    query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"\n-    cursor.execute(query)\n+    cursor.execute(\"SELECT * FROM users WHERE name = ?\", (username,))\n     return cursor.fetchone()\n \n \n",
+        "explanation": "针对 seed-2-sql-injection 的最小变更。"
+      },
+      {
+        "issue_id": "seed-3-none-deref",
+        "requires_cross_file": false,
+        "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -32,6 +32,8 @@\n def render_profile(user):\n     \"\"\"渲染用户主页。\"\"\"\n     # [SEED:3] 空指针 —— Logic / P1。当 user 为 None 时崩溃。\n+    if user is None:\n+        return \"\"\n     name = user[\"name\"]\n     return \"<h1>{}</h1>\".format(name)\n \n",
+        "explanation": "针对 seed-3-none-deref 的最小变更。"
+      },
+      {
+        "issue_id": "seed-4-nested-loop",
+        "requires_cross_file": false,
+        "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -40,9 +40,8 @@\n     \"\"\"两两相乘求和。\"\"\"\n     total = 0\n     # [SEED:4] 嵌套循环 —— Performance / P2。O(n^2)，且重复计算。\n-    for i in range(len(items)):\n-        for j in range(len(items)):\n-            total += items[i] * items[j]\n+    for value in items:\n+        total += value * sum(items)\n     return total\n \n \n",
+        "explanation": "针对 seed-4-nested-loop 的最小变更。"
+      },
+      {
+        "issue_id": "seed-5-weak-hash",
+        "requires_cross_file": false,
+        "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -49,7 +49,7 @@\n def hash_password_bad(password):\n     \"\"\"密码哈希。\"\"\"\n     # [SEED:5] 弱哈希 —— Security / P1。MD5 已不适合用于密码。\n-    return hashlib.md5(password.encode()).hexdigest()\n+    return hashlib.sha256(password.encode()).hexdigest()\n \n \n def ReadConfig(path):\n",
+        "explanation": "针对 seed-5-weak-hash 的最小变更。"
+      },
+      {
+        "issue_id": "seed-7-swallowed-exception",
+        "requires_cross_file": false,
+        "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -64,7 +64,7 @@\n     # [SEED:7] 除零与异常吞噬 —— Logic / P1。\n     try:\n         return a / b\n-    except Exception:\n+    except ZeroDivisionError:\n         return None\n \n \n",
+        "explanation": "针对 seed-7-swallowed-exception 的最小变更。"
+      },
+      {
+        "issue_id": "seed-6-naming",
+        "requires_cross_file": true,
+        "patch": "",
+        "explanation": "ReadConfig 可能被其他模块导入调用，重命名需同步修改调用处，交由人工处理。"
+      }
+    ]
+  }
+]

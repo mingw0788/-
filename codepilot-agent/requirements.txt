@@ -1,0 +1,14 @@
+# CodePilot Agent 运行依赖
+#
+# 版本固定（==）而不是范围约束：这个项目的输出（行号、补丁、报告）需要可复现，
+# 而 pydantic 2.x 与 1.x 的 API 不兼容（root_validator / .schema() / Extra.forbid
+# 的写法都变了），范围约束会让 CI 和本地悄悄跑在不同的行为上。
+
+# 数据结构与校验层。锁 1.x：代码依赖 root_validator + .schema() + Config.extra。
+pydantic==1.10.26
+
+# 真实模式（非 --mock）才需要。Mock 模式下不 import，可以离线不装。
+anthropic==0.125.0
+
+# 测试。
+pytest==8.3.5

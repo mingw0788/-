@@ -1,0 +1,284 @@
+{
+  "schema_version": "1.0",
+  "project_name": "sample_project",
+  "target_file": "user_service.py",
+  "status": "Blocked",
+  "workflow_state": "ESCALATED",
+  "issues": [
+    {
+      "issue_id": "seed-1-hardcoded-credential",
+      "category": "Security",
+      "priority": "P0",
+      "severity": "Blocker",
+      "code_anchor": "DB_PASSWORD = \"admin123456\"",
+      "description": "数据库口令以明文硬编码在源码中。任何能读到仓库的人（包括离职员工、CI 日志、构建缓存）都能拿到生产凭据，且无法在不改代码的情况下轮换。",
+      "suggestion": "改为从环境变量或密钥管理服务读取，例如 os.environ[\"DB_PASSWORD\"]，并在缺失时显式失败。",
+      "file_path": "user_service.py",
+      "fingerprint": "73796513b509c9ad"
+    },
+    {
+      "issue_id": "seed-2-sql-injection",
+      "category": "Security",
+      "priority": "P0",
+      "severity": "Blocker",
+      "code_anchor": "query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"\n    cursor.execute(query)",
+      "description": "用户名被直接拼接进 SQL 语句，攻击者传入 ' OR '1'='1 即可绕过条件读取全表，或通过 UNION 注入读取任意数据。",
+      "suggestion": "改用参数化查询：cursor.execute(\"SELECT * FROM users WHERE name = ?\", (username,))。",
+      "file_path": "user_service.py",
+      "fingerprint": "8882745add17f4fc"
+    },
+    {
+      "issue_id": "seed-3-none-deref",
+      "category": "Logic",
+      "priority": "P1",
+      "severity": "Critical",
+      "code_anchor": "name = user[\"name\"]",
+      "description": "user 可能为 None（查询无结果时），此时下标访问会抛 TypeError 导致接口 500。",
+      "suggestion": "在访问前判空，或在查询层保证返回默认对象。",
+      "file_path": "user_service.py",
+      "fingerprint": "06e8e7a0f33cd520"
+    },
+    {
+      "issue_id": "seed-4-nested-loop",
+      "category": "Performance",
+      "priority": "P2",
+      "severity": "Major",
+      "code_anchor": "for i in range(len(items)):\n        for j in range(len(items)):\n            total += items[i] * items[j]",
+      "description": "嵌套遍历同一序列，复杂度 O(n^2)，且 items[i] 在内层循环被反复索引。数据量上千时性能急剧下降。",
+      "suggestion": "用一次求和与自乘替代双重循环，把复杂度降到 O(n)。",
+      "file_path": "user_service.py",
+      "fingerprint": "7e538372d768acd1"
+    },
+    {
+      "issue_id": "seed-5-weak-hash",
+      "category": "Security",
+      "priority": "P1",
+      "severity": "Critical",
+      "code_anchor": "return hashlib.md5(password.encode()).hexdigest()",
+      "description": "MD5 计算极快且无盐，配合彩虹表可在秒级还原常见口令，不适用于口令存储。",
+      "suggestion": "改用 bcrypt / scrypt / argon2 等带盐的慢哈希算法。",
+      "file_path": "user_service.py",
+      "fingerprint": "a529e86aef6bb6d2"
+    },
+    {
+      "issue_id": "seed-6-naming",
+      "category": "Style",
+      "priority": "P3",
+      "severity": "Minor",
+      "code_anchor": "def ReadConfig(path):",
+      "description": "函数名使用 PascalCase，不符合 PEP 8 与团队 snake_case 规范。",
+      "suggestion": "重命名为 read_config。注意该函数可能被其他文件调用，需同步修改调用处。",
+      "file_path": "user_service.py",
+      "fingerprint": "7a239ff5c3af1be4"
+    },
+    {
+      "issue_id": "seed-7-swallowed-exception",
+      "category": "Logic",
+      "priority": "P1",
+      "severity": "Major",
+      "code_anchor": "try:\n        return a / b\n    except Exception:\n        return None",
+      "description": "捕获了所有异常并静默返回 None，除零错误与调用方传入非法类型被混为一谈，故障被隐藏到调用链下游，难以定位。",
+      "suggestion": "只捕获 ZeroDivisionError，并让其他异常继续向上抛出。",
+      "file_path": "user_service.py",
+      "fingerprint": "159ab47858b176f2"
+    }
+  ],
+  "located_issues": [
+    {
+      "issue_id": "seed-1-hardcoded-credential",
+      "file_path": "user_service.py",
+      "line_start": 12,
+      "line_end": 12,
+      "match_status": "exact",
+      "match_method": "exact_substring",
+      "confidence": 1.0,
+      "matched_text": "DB_PASSWORD = \"admin123456\""
+    },
+    {
+      "issue_id": "seed-2-sql-injection",
+      "file_path": "user_service.py",
+      "line_start": 20,
+      "line_end": 21,
+      "match_status": "exact",
+      "match_method": "exact_substring",
+      "confidence": 1.0,
+      "matched_text": "query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"\n    cursor.execute(query)"
+    },
+    {
+      "issue_id": "seed-3-none-deref",
+      "file_path": "user_service.py",
+      "line_start": 35,
+      "line_end": 35,
+      "match_status": "exact",
+      "match_method": "exact_substring",
+      "confidence": 1.0,
+      "matched_text": "name = user[\"name\"]"
+    },
+    {
+      "issue_id": "seed-4-nested-loop",
+      "file_path": "user_service.py",
+      "line_start": 43,
+      "line_end": 45,
+      "match_status": "exact",
+      "match_method": "exact_substring",
+      "confidence": 1.0,
+      "matched_text": "for i in range(len(items)):\n        for j in range(len(items)):\n            total += items[i] * items[j]"
+    },
+    {
+      "issue_id": "seed-5-weak-hash",
+      "file_path": "user_service.py",
+      "line_start": 52,
+      "line_end": 52,
+      "match_status": "exact",
+      "match_method": "exact_substring",
+      "confidence": 1.0,
+      "matched_text": "return hashlib.md5(password.encode()).hexdigest()"
+    },
+    {
+      "issue_id": "seed-6-naming",
+      "file_path": "user_service.py",
+      "line_start": 55,
+      "line_end": 55,
+      "match_status": "exact",
+      "match_method": "exact_substring",
+      "confidence": 1.0,
+      "matched_text": "def ReadConfig(path):"
+    },
+    {
+      "issue_id": "seed-7-swallowed-exception",
+      "file_path": "user_service.py",
+      "line_start": 65,
+      "line_end": 68,
+      "match_status": "exact",
+      "match_method": "exact_substring",
+      "confidence": 1.0,
+      "matched_text": "try:\n        return a / b\n    except Exception:\n        return None"
+    }
+  ],
+  "fixes": [
+    {
+      "issue_id": "seed-1-hardcoded-credential",
+      "requires_cross_file": false,
+      "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -9,7 +9,7 @@\n import sqlite3\n \n # [SEED:1] 硬编码的凭据 —— Security / P0。锚点唯一，应当被精确定位并修复。\n-DB_PASSWORD = \"admin123456\"\n+DB_PASSWORD = os.environ[\"DB_PASSWORD\"]\n API_TOKEN = \"sk-live-9f8e7d6c5b4a39281706\"\n \n \n",
+      "explanation": "针对 seed-1-hardcoded-credential 的最小变更。"
+    },
+    {
+      "issue_id": "seed-2-sql-injection",
+      "requires_cross_file": false,
+      "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -17,8 +17,7 @@\n     \"\"\"按用户名查询用户。\"\"\"\n     cursor = conn.cursor()\n     # [SEED:2] SQL 注入 —— Security / P0。锚点跨两行，用于验证多行定位与 patch。\n-    query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"\n-    cursor.execute(query)\n+    cursor.execute(\"SELECT * FROM users WHERE name = ?\", (username,))\n     return cursor.fetchone()\n \n \n",
+      "explanation": "针对 seed-2-sql-injection 的最小变更。"
+    },
+    {
+      "issue_id": "seed-3-none-deref",
+      "requires_cross_file": false,
+      "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -32,6 +32,8 @@\n def render_profile(user):\n     \"\"\"渲染用户主页。\"\"\"\n     # [SEED:3] 空指针 —— Logic / P1。当 user 为 None 时崩溃。\n+    if user is None:\n+        return \"\"\n     name = user[\"name\"]\n     return \"<h1>{}</h1>\".format(name)\n \n",
+      "explanation": "针对 seed-3-none-deref 的最小变更。"
+    },
+    {
+      "issue_id": "seed-4-nested-loop",
+      "requires_cross_file": false,
+      "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -40,9 +40,8 @@\n     \"\"\"两两相乘求和。\"\"\"\n     total = 0\n     # [SEED:4] 嵌套循环 —— Performance / P2。O(n^2)，且重复计算。\n-    for i in range(len(items)):\n-        for j in range(len(items)):\n-            total += items[i] * items[j]\n+    for value in items:\n+        total += value * sum(items)\n     return total\n \n \n",
+      "explanation": "针对 seed-4-nested-loop 的最小变更。"
+    },
+    {
+      "issue_id": "seed-5-weak-hash",
+      "requires_cross_file": false,
+      "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -49,7 +49,7 @@\n def hash_password_bad(password):\n     \"\"\"密码哈希。\"\"\"\n     # [SEED:5] 弱哈希 —— Security / P1。MD5 已不适合用于密码。\n-    return hashlib.md5(password.encode()).hexdigest()\n+    return hashlib.sha256(password.encode()).hexdigest()\n \n \n def ReadConfig(path):\n",
+      "explanation": "针对 seed-5-weak-hash 的最小变更。"
+    },
+    {
+      "issue_id": "seed-7-swallowed-exception",
+      "requires_cross_file": false,
+      "patch": "--- a/user_service.py\n+++ b/user_service.py\n@@ -64,7 +64,7 @@\n     # [SEED:7] 除零与异常吞噬 —— Logic / P1。\n     try:\n         return a / b\n-    except Exception:\n+    except ZeroDivisionError:\n         return None\n \n \n",
+      "explanation": "针对 seed-7-swallowed-exception 的最小变更。"
+    },
+    {
+      "issue_id": "seed-6-naming",
+      "requires_cross_file": true,
+      "patch": "",
+      "explanation": "ReadConfig 可能被其他模块导入调用，重命名需同步修改调用处，交由人工处理。"
+    }
+  ],
+  "attempts": [
+    {
+      "issue_id": "seed-6-naming",
+      "fingerprint": "7a239ff5c3af1be4",
+      "priority": "P3",
+      "category": "Style",
+      "attempts": 0,
+      "max_attempts": 1,
+      "status": "skipped_cross_file",
+      "failure_reason": "跨文件改动，交由人工处理",
+      "applied_range": [],
+      "regression_passed": true,
+      "introduced_fingerprints": [],
+      "retry_trace": []
+    },
+    {
+      "issue_id": "seed-1-hardcoded-credential",
+      "fingerprint": "73796513b509c9ad",
+      "priority": "P0",
+      "category": "Security",
+      "attempts": 3,
+      "max_attempts": 3,
+      "status": "escalated",
+      "failure_reason": "重试 patch 无法应用：git apply --check 校验未通过：Checking patch user_service.py...\nerror: while searching for:\nimport sqlite3\n\n# [SEED:1] 硬编码的凭据 —— Security / P0。锚点唯一，应当被精确定位并修复。\nDB_PASSWORD = \"admin123456\"\nAPI_TOKEN = \"sk-live-9f8e7d6c5b4a39281706\"\n\n\n\nerror: patch failed: user_service.py:9\nerror: user_service.py: patch does not apply",
+      "applied_range": [
+        12,
+        12
+      ],
+      "regression_passed": true,
+      "introduced_fingerprints": [],
+      "retry_trace": [
+        {
+          "attempt": 2,
+          "error": "patch_unapplicable"
+        },
+        {
+          "attempt": 3,
+          "error": "patch_unapplicable"
+        }
+      ]
+    },
+    {
+      "issue_id": "seed-2-sql-injection",
+      "fingerprint": "8882745add17f4fc",
+      "priority": "P0",
+      "category": "Security",
+      "attempts": 3,
+      "max_attempts": 3,
+      "status": "escalated",
+      "failure_reason": "重试 patch 无法应用：git apply --check 校验未通过：Checking patch user_service.py...\nerror: while searching for:\n    \"\"\"按用户名查询用户。\"\"\"\n    cursor = conn.cursor()\n    # [SEED:2] SQL 注入 —— Security / P0。锚点跨两行，用于验证多行定位与 patch。\n    query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"\n    cursor.execute(query)\n    return cursor.fetchone()\n\n\n\nerror",
+      "applied_range": [
+        20,
+        21
+      ],
+      "regression_passed": true,
+      "introduced_fingerprints": [],
+      "retry_trace": [
+        {
+          "attempt": 2,
+          "error": "patch_unapplicable"
+        },
+        {
+          "attempt": 3,
+          "error": "patch_unapplicable"
+        }
+      ]
+    }
+  ],
+  "unresolved_issue_ids": [],
+  "escalated_issue_ids": [
+    "seed-1-hardcoded-credential",
+    "seed-2-sql-injection"
+  ],
+  "cross_file_issue_ids": [
+    "seed-6-naming"
+  ],
+  "regression_issue_ids": [],
+  "applied_patch_count": 2,
+  "llm_calls": 8,
+  "started_at": "2026-09-18T12:03:01+00:00",
+  "finished_at": "2026-09-18T12:03:01+00:00",
+  "notes": ""
+}
